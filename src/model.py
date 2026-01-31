@@ -7,11 +7,17 @@ from matplotlib import pyplot as plt
 #here we will initialise following parameter
 #here we have chosen number from -0.5 to 0.5 because they are best for the activation function and neural networks start with small, random, zero-centered weights so learning is stable and neurons don’t behave identically
 def initialize_parameters():
-    W1 = np.random.rand(10, 784) - 0.5
-    B1 = np.random.rand(10, 1) - 0.5
-    W2 = np.random.rand(10, 10) - 0.5
-    B2 = np.random.rand(10, 1) - 0.5
-    return W1, B1, W2, B2
+    W1 = np.random.rand(64, 784) - 0.5
+    B1 = np.random.rand(64, 1) - 0.5
+
+    W2 = np.random.rand(32, 64) - 0.5
+    B2 = np.random.rand(32, 1) - 0.5
+
+    W3 = np.random.rand(10, 32) - 0.5
+    B3 = np.random.rand(10, 1) - 0.5
+
+    return W1, B1, W2, B2, W3, B3
+
 #here we check the initialised parameter 
 # W1, B1, W2, B2 = initialize_parameters()
 # print("W1:\n", W1)
@@ -40,12 +46,18 @@ def softmax_calculator(Z):
 
 
 #here we are calculating value of ewquired parameter accourding to the formula
-def forward_propagation(W1, B1, W2, B2, X):
+def forward_propagation(W1, B1, W2, B2, W3, B3, X):
     Z1 = W1.dot(X) + B1
     A1 = ReLU(Z1)
+
     Z2 = W2.dot(A1) + B2
-    A2 = softmax_calculator(Z2)
-    return Z1, A1, Z2, A2
+    A2 = ReLU(Z2)
+
+    Z3 = W3.dot(A2) + B3
+    A3 = softmax_calculator(Z3)
+
+    return Z1, A1, Z2, A2, Z3, A3
+
 
 #this is the one hot converter
 def one_hot_converter(Y): # takes input y
@@ -53,36 +65,54 @@ def one_hot_converter(Y): # takes input y
     one_hot_Y[np.arange(Y.size), Y] = 1 # now convert the number into one hot form
     return one_hot_Y.T #return one hot in transpose
 
-def compute_loss(A2, Y):
+def compute_loss(A3, Y):
     one_hot_Y = one_hot_converter(Y)
     # small epsilon to avoid log(0)
-    loss = -np.sum(one_hot_Y * np.log(A2 + 1e-8)) / Y.size
+    loss = -np.sum(one_hot_Y * np.log(A3 + 1e-8)) / Y.size
     return loss
 
 
 # 
-def backward_propagation(W1, B1, W2, B2, Z1, A1, Z2, A2, X, Y):
+def backward_propagation( W1, B1, W2, B2, W3, B3,Z1, A1, Z2, A2, Z3, A3, X, Y):
     m = Y.size
     one_hot_Y = one_hot_converter(Y)
-    dZ2 = A2 - one_hot_Y
-    dW2 = 1 / m * dZ2.dot(A1.T)
-    dB2 = (1 / m) * np.sum(dZ2, axis=1, keepdims=True)
+
+    dZ3 = A3 - one_hot_Y
+    dW3 = (1/m) * dZ3.dot(A2.T)
+    dB3 = (1/m) * np.sum(dZ3, axis=1, keepdims=True)
+
+    dZ2 = W3.T.dot(dZ3) * (Z2 > 0)
+    dW2 = (1/m) * dZ2.dot(A1.T)
+    dB2 = (1/m) * np.sum(dZ2, axis=1, keepdims=True)
+
     dZ1 = W2.T.dot(dZ2) * (Z1 > 0)
-    dW1 = 1 / m * dZ1.dot(X.T)
-    dB1 = (1 / m) * np.sum(dZ1, axis=1, keepdims=True)  
-    return dW1, dB1, dW2, dB2
+    dW1 = (1/m) * dZ1.dot(X.T)
+    dB1 = (1/m) * np.sum(dZ1, axis=1, keepdims=True)
+
+    return dW1, dB1, dW2, dB2, dW3, dB3
+
 
 
 # updating parameter before it again goes in forward propagation
-def update_parameters(W1, B1, W2, B2, dW1, dB1, dW2, dB2, learning_rate):
-  W1 = W1 - learning_rate * dW1
-  B1 = B1 - learning_rate * dB1
-  W2 = W2 - learning_rate * dW2
-  B2 = B2 - learning_rate * dB2
-  return W1, B1, W2, B2
+def update_parameters(
+    W1, B1, W2, B2, W3, B3,
+    dW1, dB1, dW2, dB2, dW3, dB3, learning_rate
+):
 
-def get_predictions(A2):
-  return np.argmax(A2, 0)
+    W1 -= learning_rate * dW1
+    B1 -= learning_rate * dB1
+
+    W2 -= learning_rate * dW2
+    B2 -= learning_rate * dB2
+
+    W3 -= learning_rate * dW3
+    B3 -= learning_rate * dB3
+
+    return W1, B1, W2, B2, W3, B3
+
+
+def get_predictions(A3):
+  return np.argmax(A3, 0)
 
 def get_accuracy(predictions, Y):
   return np.sum(predictions == Y) / Y.size

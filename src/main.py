@@ -53,12 +53,13 @@ X_test = data_2[:, 1:].T
 X_test = X_test / 255.0
 Y_test = data_2[:, 0]
 
-W1, B1, W2, B2, iters, accs, losses = gradient_descent(
-    X_train, Y_train, 0.1, 1000
+W1, B1, W2, B2, W3, B3, iters, accs, losses = gradient_descent(
+    X_train, Y_train, 0.05, 5000
 )
 
-# validation
-validate(W1, B1, W2, B2, X_val, Y_val)
+
+validate(W1, B1, W2, B2, W3, B3, X_val, Y_val)
+
 
 plt.figure()
 plt.plot(iters, accs)
@@ -75,5 +76,4 @@ plt.ylabel("Loss")
 plt.title("Training Loss vs Iterations")
 plt.show()
 
-#  testing
-test(W1, B1, W2, B2, X_test, Y_test)
+test(W1, B1, W2, B2, W3, B3, X_test, Y_test)
