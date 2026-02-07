@@ -54,7 +54,7 @@ X_test = X_test / 255.0
 Y_test = data_2[:, 0]
 
 W1, B1, W2, B2, W3, B3, iters, accs, losses = gradient_descent(
-    X_train, Y_train, 0.1, 5000
+    X_train, Y_train, 0.1, 1000
 )
 
 
